@@ -137,8 +137,8 @@ contract ImpossibleStaking is Ownable {
         }
         uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
         uint256 ifReward = multiplier.mul(ifPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
-        ifToken.mint(devaddr, ifReward.div(8));
-        ifToken.mint(address(this), ifReward);
+        //ifToken.mint(devaddr, ifReward.div(8));
+        //ifToken.mint(address(this), ifReward);
         pool.accIFPerShare = pool.accIFPerShare.add(ifReward.mul(1e12).div(lpSupply));
         pool.lastRewardBlock = block.number;
     }

@@ -1,3 +1,8 @@
+pragma solidity ^0.6.0;
+import './SafeMath.sol';
+import './Address.sol';
+import '../interfaces/IERC20.sol';
+
 /**
  * @title SafeERC20
  * @dev Wrappers around ERC20 operations that throw on failure (when the token

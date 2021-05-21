@@ -1,6 +1,7 @@
 pragma solidity ^0.6.0;
+import './IERC20.sol';
 
-interface IMigratorChef {
+interface IImpossibleMigrator {
     // Perform LP token migration from legacy PancakeSwap to StableX Swap.
     // Take the current LP token address and return the new LP token address.
     // Migrator should have full access to the caller's LP token.
