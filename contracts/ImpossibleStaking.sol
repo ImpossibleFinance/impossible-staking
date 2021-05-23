@@ -92,7 +92,6 @@ contract ImpossibleStaking is Ownable {
         poolInfo[_pid].allocPoint = _allocPoint;
     }
 
-    // TODO: check _from always >= startBlock
     function getMultiplier(uint256 _from, uint256 _to) public view returns (uint256) {
         uint _endBlock = endBlock; // gas savings
         if (_from >= _endBlock) {
