@@ -25,19 +25,19 @@ contract ImpossibleStaking is Ownable {
 
     IERC20 public ifToken;
     address public devaddr;
-    uint256 public bonusEndBlock;
+    uint256 public startBlock;
+    uint256 public endBlock;
     uint256 public ifPerBlock;
-    uint256 public constant BONUS_MULTIPLIER = 10;
+    uint256 public totalAllocPoint = 0;
     IImpossibleMigrator public migrator;
 
     PoolInfo[] public poolInfo;
     mapping (uint256 => mapping (address => UserInfo)) public userInfo;
-    uint256 public totalAllocPoint = 0;
-    uint256 public startBlock;
 
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
     event EmergencyWithdraw(address indexed user, uint256 indexed pid, uint256 amount);
+    event DevWithdraw(address token, uint amount);
 
     constructor(
         IERC20 _if,
@@ -92,15 +92,13 @@ contract ImpossibleStaking is Ownable {
         poolInfo[_pid].allocPoint = _allocPoint;
     }
 
+    // TODO: check _from always >= startBlock
     function getMultiplier(uint256 _from, uint256 _to) public view returns (uint256) {
-        if (_to <= bonusEndBlock) {
-            return _to.sub(_from).mul(BONUS_MULTIPLIER);
-        } else if (_from >= bonusEndBlock) {
-            return _to.sub(_from);
+        uint _endBlock = endBlock; // gas savings
+        if (_from >= _endBlock) {
+            return 0;
         } else {
-            return bonusEndBlock.sub(_from).mul(BONUS_MULTIPLIER).add(
-                _to.sub(bonusEndBlock)
-            );
+            return _to >= _endBlock ? _endBlock.sub(_from) : _to.sub(_from);
         }
     }
 
@@ -137,8 +135,6 @@ contract ImpossibleStaking is Ownable {
         }
         uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
         uint256 ifReward = multiplier.mul(ifPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
-        //ifToken.mint(devaddr, ifReward.div(8));
-        //ifToken.mint(address(this), ifReward);
         pool.accIFPerShare = pool.accIFPerShare.add(ifReward.mul(1e12).div(lpSupply));
         pool.lastRewardBlock = block.number;
     }
@@ -204,5 +200,30 @@ contract ImpossibleStaking is Ownable {
     function dev(address _devaddr) public {
         require(msg.sender == devaddr, "dev: wut?");
         devaddr = _devaddr;
+    }
+
+    // Withdraws remaining IF balance in contract. Can only be called after endblock
+    function removeIFBal(uint amount) external onlyOwner {
+        require(block.number > endBlock, "only can withdraw IF after endBlock");
+        safeIFTransfer(_msgSender(), amount);
+        emit DevWithdraw(ifToken, amount);
+    }
+
+    // retrieve other tokens erroneously sent in to this address
+    // Cannot withdraw LP tokens!!
+    function emergencyTokenRetrieve(address token) external onlyOwner {
+        uint i;
+        for (i = 0; i < poolInfo.length; i++) {
+          require(token != poolInfo[i].lpToken, "Cannot withdraw LP tokens");
+        }
+
+        uint balance = IERC20(token).balanceOf(address(this));
+
+        IERC20(token).safeTransfer(
+            _msgSender(),
+            balance
+        );
+
+        emit DevWithdraw(token, balance);
     }
 }
