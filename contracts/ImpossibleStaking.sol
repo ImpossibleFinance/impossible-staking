@@ -24,7 +24,6 @@ contract ImpossibleStaking is Ownable {
     }
 
     IERC20 public ifToken;
-    address public devaddr;
     uint256 public startBlock;
     uint256 public endBlock;
     uint256 public ifPerBlock;
@@ -41,15 +40,13 @@ contract ImpossibleStaking is Ownable {
 
     constructor(
         IERC20 _if,
-        address _devaddr,
         uint256 _ifPerBlock,
         uint256 _startBlock,
-        uint256 _bonusEndBlock
+        uint256 _endBlock
     ) public {
         ifToken = _if;
-        devaddr = _devaddr;
         ifPerBlock = _ifPerBlock;
-        bonusEndBlock = _bonusEndBlock;
+        endBlock = _endBlock;
         startBlock = _startBlock;
     }
 
@@ -195,17 +192,11 @@ contract ImpossibleStaking is Ownable {
         }
     }
 
-    // Update dev address by the previous dev.
-    function dev(address _devaddr) public {
-        require(msg.sender == devaddr, "dev: wut?");
-        devaddr = _devaddr;
-    }
-
     // Withdraws remaining IF balance in contract. Can only be called after endblock
     function removeIFBal(uint amount) external onlyOwner {
         require(block.number > endBlock, "only can withdraw IF after endBlock");
         safeIFTransfer(_msgSender(), amount);
-        emit DevWithdraw(ifToken, amount);
+        emit DevWithdraw(address(ifToken), amount);
     }
 
     // retrieve other tokens erroneously sent in to this address
@@ -213,7 +204,7 @@ contract ImpossibleStaking is Ownable {
     function emergencyTokenRetrieve(address token) external onlyOwner {
         uint i;
         for (i = 0; i < poolInfo.length; i++) {
-          require(token != poolInfo[i].lpToken, "Cannot withdraw LP tokens");
+          require(token != address(poolInfo[i].lpToken), "Cannot withdraw LP tokens");
         }
 
         uint balance = IERC20(token).balanceOf(address(this));
@@ -223,6 +214,6 @@ contract ImpossibleStaking is Ownable {
             balance
         );
 
-        emit DevWithdraw(token, balance);
+        emit DevWithdraw(address(token), balance);
     }
 }
