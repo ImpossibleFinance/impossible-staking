@@ -3,7 +3,6 @@ import './libraries/Ownable.sol';
 import './libraries/SafeMath.sol';
 import './libraries/SafeERC20.sol';
 import './interfaces/IERC20.sol';
-import './interfaces/IImpossibleMigrator.sol';
 
 
 contract ImpossibleStaking is Ownable {
@@ -28,7 +27,6 @@ contract ImpossibleStaking is Ownable {
     uint256 public endBlock;
     uint256 public ifPerBlock;
     uint256 public totalAllocPoint = 0;
-    IImpossibleMigrator public migrator;
 
     PoolInfo[] public poolInfo;
     mapping (uint256 => mapping (address => UserInfo)) public userInfo;
@@ -48,21 +46,6 @@ contract ImpossibleStaking is Ownable {
         ifPerBlock = _ifPerBlock;
         endBlock = _endBlock;
         startBlock = _startBlock;
-    }
-
-    function setMigrator(IImpossibleMigrator _migrator) public onlyOwner {
-        migrator = _migrator;
-    }
-
-    function migrate(uint256 _pid) public {
-        require(address(migrator) != address(0), "migrate: no migrator");
-        PoolInfo storage pool = poolInfo[_pid];
-        IERC20 lpToken = pool.lpToken;
-        uint256 bal = lpToken.balanceOf(address(this));
-        lpToken.safeApprove(address(migrator), bal);
-        IERC20 newLpToken = migrator.migrate(lpToken);
-        require(bal == newLpToken.balanceOf(address(this)), "migrate: bad");
-        pool.lpToken = newLpToken;
     }
 
     function poolLength() external view returns (uint256) {
