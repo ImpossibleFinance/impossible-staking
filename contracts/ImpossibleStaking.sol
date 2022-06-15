@@ -81,7 +81,7 @@ contract ImpossibleStaking is Ownable {
         }
     }
 
-    function pendingIF(uint256 _pid, address _user) external view returns (uint256) {
+    function pendingRewards(uint256 _pid, address _user) external view returns (uint256) {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_user];
         uint256 accRewardPerShare = pool.accRewardPerShare;
